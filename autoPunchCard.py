@@ -10,9 +10,10 @@ import re
 # sys.setdefaultencoding('utf-8')
 
 
-my_name = '李杰'.decode("utf-8")
+# my_name = '谢克械'.decode("utf-8")
+my_id = '19388'.decode("utf-8")
 my_info = []
-my_data = ['19489','李杰','占位日期','否','否','上午上班','个人原因','忘记打卡','无','占位上下午','物联天下']
+my_data = ['占位id','占位名字','占位日期','否','否','占位上下午','个人原因','忘记打卡','无','占位上下午','物联天下']
 
 def setExcel(data_excel_name,copy_name,final_name):
     #获取数据的excel
@@ -25,7 +26,6 @@ def setExcel(data_excel_name,copy_name,final_name):
 
     print '表', table.nrows, table.ncols
 
-
     #生成的excel
     copy_data = xlrd.open_workbook(copy_name, formatting_info=True)
     new_row = copy_data.sheets()[0].nrows
@@ -37,45 +37,51 @@ def setExcel(data_excel_name,copy_name,final_name):
     for i in range(len(table.col_values(3))):
          # print name,'unicode:',u'%s'%name
         name = table.col_values(3)[i]
-        if my_name == name:
+        id = table.col_values(2)[i]
+        if my_id == id:
             record = table.col_values(44)[i]
-            string = re.sub("[<>]", "", record)  # 去尖括号
-            english_only = ''.join(x for x in string if ord(x) < 256)  # 去中文
-
             my_info.append(name)
-            if record != '':
-                # 转换成时间数组
-                timeArray = time.strptime(english_only, "%m-%d %H:%M")
-                tm_hour = timeArray[3]  # 具体哪个小时
-                str_time = ''
-                if 7 < tm_hour < 10:
-                    str_time = '上午上班'
-                elif 11 < tm_hour <= 12:
-                    str_time = '上午下班'
-                elif 12 < tm_hour < 15:
-                    str_time = '下午上班'
-                elif 15 < tm_hour < 19:
-                    str_time = '下午下班'
-                else:
-                    str_time = '未知时间'
+            slist = record.split('>')
+            # print "slict,",slist
+            for strI in slist:
+                if strI != '':
+                    string = re.sub("[<>]", "", strI)  # 去尖括号
+                    english_only = ''.join(x for x in string if ord(x) < 256)  # 去中文
+                    
+                    print '未打卡原记录:',u'%s'%string
+
+                    # 转换成时间数组
+                    timeArray = time.strptime(english_only, "%m-%d %H:%M")
+                    tm_hour = timeArray[3]  # 具体哪个小时
+                    str_time = ''
+                    if 7 < tm_hour < 10:
+                        str_time = '上午上班'
+                    elif 11 < tm_hour <= 12:
+                        str_time = '上午下班'
+                    elif 12 < tm_hour < 15:
+                        str_time = '下午上班'
+                    elif 15 < tm_hour < 19:
+                        str_time = '下午下班'
+                    else:
+                        str_time = '未知时间'
 
 
-                # print '时间是：',str_time
-                dt_new = time.strftime("2017/%m/%d", timeArray)
-                print '(', i,')', string,'具体时间：', english_only, '转化：', dt_new, str_time
+                    # print '时间是：',str_time
+                    dt_new = time.strftime("2017/%m/%d", timeArray)
+                    print '(', i,')', string,'具体时间：', english_only, '转化：', dt_new, str_time
 
-                #excel 写数据0
-                setPunchDatas(new_table,new_row,dt_new,str_time.decode("utf-8"))
-                new_row = new_row+1
+                    #excel 写数据0
+                    setPunchDatas(new_table,new_row,my_id,name,dt_new,str_time.decode("utf-8"))
+                    new_row = new_row+1
 
-                unpunch_card.append(english_only)
+                    unpunch_card.append(english_only)
 
     print '我的记录:', "有", len(my_info), '个', '\n', '未打卡有：', unpunch_card, len(unpunch_card), '个'
     new_excel.save(final_name) # xlwt对象的保存方法，这时便覆盖掉了原来的excel
 
 
 
-def setPunchDatas(table,row,date,noon):
+def setPunchDatas(table,row,id,name,date,noon):
     # 获取一个工作表
 
     # table = toset_data.sheets()[0]  # 通过索引顺序获取
@@ -84,6 +90,8 @@ def setPunchDatas(table,row,date,noon):
     # rows = table.nrows
     for index in range(len(my_data)):
         table.write(row, index, my_data[index].decode("utf-8"))
+    table.write(row, 0, id)
+    table.write(row, 1, name)
     table.write(row, 2, date)
     table.write(row, 5, noon)
     table.write(row, 9, noon)
@@ -94,7 +102,7 @@ def setPunchDatas(table,row,date,noon):
 
     # table.cell(int(table.nrows)+1, 1).value = 'test'
 
-setExcel('excelFile.xlsx','test.xls','output.xls')
+setExcel('创意车街10月考勤.xlsx','test.xls','output.xls')
 # setPunchDatas('test.xls','testsave.xls')
 
 # s = "中文bab#$%$#%#$"
