@@ -4,14 +4,36 @@ from PyQt5.QtCore import *
 import sys,os,json
 from punchcard import checkExcel ,creatExcel
 
+class MyLineEdit(QLineEdit):
+    def __init__(self,parent=None):
+        super(QLineEdit,self).__init__(parent)
+        ###初始化打开接受拖拽使能
+        self.setAcceptDrops(True)
 
-class PersonalInfo(object):
+    def dragEnterEvent(self,event):
+        event.accept()
+
+    def dropEvent(self, event):
+        ###获取拖放过来的文件的路径
+        st = str(event.mimeData().urls())
+        ########st就是Qt文件的路径。我们将这个路径稍作处理便可以得到我们想要的路径了
+        st = st.replace("[PyQt5.QtCore.QUrl('file://","")
+        st = st.replace("'), ",",")
+        st = st.replace("PyQt5.QtCore.QUrl('file://","")
+        st = st.replace("')]","")
+        # st = st
+        self.setText(st)
+        print ("drag end")
+
+
+
+class PersonalInfo():
     """docstring for PersonalInfo"""
     def __init__(self, arg=None):
         super(PersonalInfo, self).__init__()
         # self.arg = arg
         # self.open()
-    def open(test):
+    def open():
         model={} #存放读取的数据
         if os.access("./source/info.json", os.F_OK):
             with open("./source/info.json",'r',encoding='utf-8') as json_file:
@@ -21,6 +43,17 @@ class PersonalInfo(object):
             # return []
             pass
             # return '不存在文件'
+    
+    def save(key,value):
+        info = PersonalInfo.open()
+        info[key] = value
+        # print ('save info',info)
+        with open("./source/info.json",'w',encoding='utf-8') as json_file:
+            json.dump(info,json_file,ensure_ascii=False)
+
+    def create():
+        pass
+        
         
 
 
@@ -29,27 +62,42 @@ class PersonalInfo(object):
 class SelectDialog(QDialog):
     def __init__(self, parent=None):
         super(SelectDialog, self).__init__(parent)
-        self.info = PersonalInfo().open()
-
-        self.path = os.getcwd()
+        self.info = PersonalInfo.open()
+        self.labrec = ''
+        self.path = os.getcwd()[0]
         self.initUI()
-        self.setWindowTitle("补卡")
+        self.setWindowTitle("批补卡")
         self.resize(340, 100)
         # print self.info
 
     def initUI(self):
         worknum = ''
+        # kqpath = ''
         if self.info:
-            print (self.info)
-            worknum = self.info['num']
+            if 'num' in self.info:
+                worknum = self.info['num']
+            if 'filepath' in self.info:
+                self.path = self.info['filepath']
+
         else: 
             print ('无info')
+
+
         grid = QGridLayout()
         self.grd = grid
         grid.addWidget(QLabel("考勤表："), 0, 0)
-        self.pathLineEdit = QLineEdit()
+        self.pathLineEdit = MyLineEdit()
         self.pathLineEdit.setFixedWidth(400)
-        self.pathLineEdit.setText('')
+        self.pathLineEdit.setText(self.path)
+
+        self.pathLineEdit.setDragEnabled = True
+        self.pathLineEdit.setDropEnabled = True
+        # self.pathLineEdit.dragLeaveEvent()
+
+        # self.pathLineEdit.connect(self.pathLineEdit, QtCore.SIGNAL("dropped"), self.test)
+
+
+
         grid.addWidget(self.pathLineEdit, 0, 1)
         button = QPushButton("更改")
         button.clicked.connect(self.changePath)
@@ -65,12 +113,12 @@ class SelectDialog(QDialog):
         # button2.clicked.connect(self.changePath)
         # grid.addWidget(button2, 1, 2)
 
-        tfnum = QLineEdit()
-        tfnum.setFixedWidth(100)
-        tfnum.setText(worknum)
-        tfnum.move(100,50)
+        self.tfnum = QLineEdit()
+        self.tfnum.setFixedWidth(100)
+        self.tfnum.setText(worknum)
+        self.tfnum.move(100,50)
         grid.addWidget(QLabel("工号："), 2, 0)
-        grid.addWidget(tfnum, 2, 1)
+        grid.addWidget(self.tfnum, 2, 1)
 
         button3 = QPushButton("查看")
         button3.clicked.connect(self.check)
@@ -86,31 +134,72 @@ class SelectDialog(QDialog):
         self.setLayout(grid)
 
     def check(self):
-        print ('路径:',self.path[0])
-        result = checkExcel(self.path[0],'19489')
+        result = checkExcel(self.path,self.tfnum.text())
+        print ('路径:',self.path,'工号：',self.tfnum.text(),'条数：',len(result[1]))
         # print (result)
 
+        self.listw = QListWidget()
+        self.listw.addItems(result[0])
+        self.listw.setFixedWidth(400)
+        self.grd.addWidget(self.listw, 3, 1)
 
-        listw = QListWidget()
-        listw.addItems(result[0])
-        listw.setFixedWidth(400)
-        self.grd.addWidget(listw, 3, 1)
+        # print ()
+        if self.labrec == '' :
+            self.labrec = QLabel()
+            self.labrec.setText("有%d条未打卡记录" % len(result[1]))
+            self.grd.addWidget(self.labrec, 4, 1)
+        else:
+            self.labrec.setText("有%d条未打卡记录" % len(result[1]))
 
+        # self.grd.addWidget(QLabel("具体地点："), 5, 0)
+        # self.grd.addWidget(QLineEdit(""), 5, 1)
+        
+        self.grd.addWidget(QLabel("工作原因："), 6, 0)
+        self.grd.addWidget(QLineEdit(""), 6, 1)
+
+        button = QPushButton("查看")
+        button.clicked.connect(self.output)
+        self.grd.addWidget(button, 6, 2)
+        
+        if len(result)>2:
+            self.grd.addWidget(QLabel("个人原因："), 7, 0)
+            self.grd.addWidget(QLineEdit(""), 7, 1)
+
+
+    def output(self):
+        
+        open = QFileDialog()
+        self.outputpath = open.getExistingDirectory()
+        self.grd.addWidget(QLabel("导出路径："), 8, 0)
+        self.grd.addWidget(QLineEdit(self.outputpath), 8, 1)
 
     def test(self):
-        self.grd.addWidget(QLabel("工作原因："), 3, 0)
-        self.grd.addWidget(QLineEdit("test"), 3, 1)
+        print ('test')
+        # self.grd.addWidget(QLabel("工作原因："), 3, 0)
+        # self.grd.addWidget(QLineEdit("test"), 3, 1)
 
-        self.grd.addWidget(QLabel("个人原因："), 3, 2)
-        self.grd.addWidget(QLineEdit("test"), 3, 3)
+        # self.grd.addWidget(QLabel("个人原因："), 3, 2)
+        # self.grd.addWidget(QLineEdit("test"), 3, 3)
 
     def changePath(self):
-        print ('enter')
+        # print ('enter')
         open = QFileDialog()
-        self.path=open.getOpenFileName()
-        print('check',self.path)
-        #self.path = open.getExistingDirectory()
-        self.pathLineEdit.setText(self.path[0])
+        getpath=open.getOpenFileName()[0]
+            
+        if (getpath == ''):
+            print ('空路径') 
+            pass
+        elif ('.xls' in getpath):
+            print('check',getpath)
+            #self.path = open.getExistingDirectory()
+            self.path = getpath
+            self.pathLineEdit.setText(self.path)
+            PersonalInfo.save('filepath',self.path)
+        else:
+            print ('所选文件不符合') 
+            QMessageBox.information(self,                         #使用infomation信息框    
+            "所选文件不符合",    
+            "请选择.xls或.xlsx文件") 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
