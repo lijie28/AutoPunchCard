@@ -58,7 +58,7 @@ def checkExcel(data_excel_name,my_id):
                         str_time = '未知时间'
 
                     dt_new = time.strftime("2018/%m/%d", timeArray)
-                    showmsg =  ('(%d)' %i) + name + string +',具体时间：' + english_only +',转化：'+ dt_new + str_time
+                    showmsg =  ('(%d)' %i) + name + string +',具体时间：' + english_only +',=====>>'+ dt_new + ' ' + str_time
                     unpunch_detail = {
                         'id':my_id,
                         'name':name,
