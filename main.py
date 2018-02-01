@@ -94,18 +94,18 @@ class SelectDialog(QDialog):
         self.personal_reason_tit = None#个人原因标题
         self.btn_output = None#导出按钮
         self.outputpath = None#导出路径
+        self.buttonBox = None#确定保存
+
+    def getInfo(test,key):
+        if test.info:
+            if key in test.info:
+                return test.info[key]
+        return ''
+
+
     def initUI(self):
-        worknum = ''
-        # kqpath = ''
-        if self.info:
-            if 'num' in self.info:
-                worknum = self.info['num']
-            if 'filepath' in self.info:
-                self.path = self.info['filepath']
-
-        else: 
-            print ('无info')
-
+        worknum = self.getInfo('num')
+        self.path  = self.getInfo('filepath')
 
         grid = QGridLayout()
         self.grd = grid
@@ -141,24 +141,27 @@ class SelectDialog(QDialog):
 
         #未打卡记录表
         if self.record_detail is None :
-            print ('no record_detail')
             self.record_detail = QListWidget()
             self.record_detail.addItems(result[0])
-            # self.record_detail.setFixedWidth(400)
-            # self.record_detail.setFixedHeight(150)
             self.grd.addWidget(self.record_detail, 3, 1)
         else:
             for i in range(self.record_detail.count())[::-1]:
                 select_item = self.record_detail.takeItem(i)
                 self.record_detail.removeItemWidget(select_item)
             self.record_detail.addItems(result[0])  
-
+        self.record_detail.setSelectionMode(QAbstractItemView.MultiSelection)
+        # self.record_detail.setCurrentRow(0) 
+        # self.record_detail.setCurrentRow(1) 
+        print ('selectedItems,',self.record_detail.selectedItems().count())
 
         # 未打卡数
         if self.record_num is None :
             self.record_num = QLabel()
-            self.record_num.setText("有%d条未打卡记录" % len(result[1]))
+            # self.record_num.setText("有%d条未打卡记录" % len(result[1]))
             self.grd.addWidget(self.record_num, 4, 1)
+        # else:
+        if len(result[1]) >2:
+            self.record_num.setText("有%d条未打卡记录,工作原因只能选2条" % len(result[1]))
         else:
             self.record_num.setText("有%d条未打卡记录" % len(result[1]))
 
@@ -168,7 +171,7 @@ class SelectDialog(QDialog):
             self.work_reason = QLineEdit()
             self.grd.addWidget(QLabel("工作原因："), 6, 0)
             self.grd.addWidget(self.work_reason, 6, 1)
-
+        self.work_reason.setText(self.getInfo('work_reason'))
 
 
         if len(result[1])>2:
@@ -178,9 +181,10 @@ class SelectDialog(QDialog):
                 self.personal_reason_tit = QLabel("个人原因：")
                 self.grd.addWidget(self.personal_reason_tit, 7, 0)
                 self.grd.addWidget(self.personal_reason, 7, 1)
+                self.personal_reason.setText(self.getInfo('personal_reason'))
         else:
             if self.personal_reason :
-                print ('chekck')
+                # print ('chekck')
                 self.grd.removeWidget(self.personal_reason)
                 self.grd.removeWidget(self.personal_reason_tit)
 
@@ -197,18 +201,54 @@ class SelectDialog(QDialog):
             self.grd.addWidget(self.btn_output, 8, 2)
 
 
-    def output(self):
-        open = QFileDialog()
         if self.outputpath is None: 
-            print ('set output')    
             self.outputpath = QLabel()
             self.grd.addWidget(self.outputpath, 8, 1)
+        self.outputpath.setText(self.getInfo('output'))
+
+        if self.buttonBox is None:
+            self.buttonBox = QPushButton("导出")
+            self.buttonBox.clicked.connect(self.confirm) 
+            self.grd.addWidget(self.buttonBox, 9, 1)
+
+    def output(self):
+        open = QFileDialog()
         outputpath_str = open.getExistingDirectory()
         self.outputpath.setText(outputpath_str)
+        # print ('set output',self.outputpath.text())    
 
-    def test(self):
-        print ('test')
-
+        # if self.buttonBox is None:
+        #     self.buttonBox = QDialogButtonBox()
+        #     self.buttonBox.setOrientation(Qt.Horizontal)  # 设置为水平方向
+        #     self.buttonBox.setStandardButtons(QDialogButtonBox.lala|QDialogButtonBox.Cancel)
+        #     self.grd.addWidget(self.buttonBox, 9, 1)
+        # self.buttonBox.accepted.connect(self.test)  # 确定
+        # self.buttonBox.rejected.connect(self.test)  # 取消
+      
+    def confirm(self):
+        # print ('confirm')
+        if self.work_reason.text() == '':
+            QMessageBox.information(self,"","请填写工作原因") 
+        elif self.outputpath.text() == '':
+            QMessageBox.information(self,"","请设置导出路径")
+        elif self.tfnum.text() == '':
+            QMessageBox.information(self,"","请填写工号")
+        elif self.personal_reason :
+            if (self.personal_reason.text() == ''):
+                QMessageBox.information(self,"","请填写个人原因")
+            else :
+                print ('ok')
+            PersonalInfo.save('filepath',self.path)
+            PersonalInfo.save('num',self.tfnum.text())
+            PersonalInfo.save('work_reason',self.work_reason.text())
+            PersonalInfo.save('output',self.outputpath.text())
+            PersonalInfo.save('personal_reason',self.personal_reason.text())
+        else:
+            print ('ok')
+            PersonalInfo.save('filepath',self.path)
+            PersonalInfo.save('num',self.tfnum.text())
+            PersonalInfo.save('work_reason',self.work_reason.text())
+            PersonalInfo.save('output',self.outputpath.text())
 
     def changePath(self):
         # print ('enter')
@@ -223,12 +263,15 @@ class SelectDialog(QDialog):
             #self.path = open.getExistingDirectory()
             self.path = getpath
             self.pathLineEdit.setText(self.path)
-            PersonalInfo.save('filepath',self.path)
         else:
             print ('所选文件不符合') 
             QMessageBox.information(self,                         #使用infomation信息框    
             "所选文件不符合",    
             "请选择.xls或.xlsx文件") 
+
+
+    def test(self):
+        print ('test')
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
