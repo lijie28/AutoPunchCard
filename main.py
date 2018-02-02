@@ -49,9 +49,9 @@ class PersonalInfo():
     def save(key,value):
         info = PersonalInfo.open()
         info[key] = value
-        print ('save info',info)
-        # with open("./source/info.json",'w',encoding='utf-8') as json_file:
-            # json.dump(info,json_file,ensure_ascii=False)
+        # print ('save info',info)
+        with open("./source/info.json",'w',encoding='utf-8') as json_file:
+            json.dump(info,json_file,ensure_ascii=False)
 
     def create():
         pass
@@ -310,24 +310,47 @@ class SelectDialog(QDialog):
         QMessageBox.information(self,"",strinfo) 
             
 
-    def changePath(self):
-        # print ('enter')
-        open = QFileDialog()
-        getpath=open.getOpenFileName()[0]
-            
-        if (getpath == ''):
+    def pathRight(self,path):
+        if (path == ''):
             print ('空路径') 
-            pass
-        elif ('.xls' in getpath):
-            print('check',getpath)
+            return False
+        elif ('.xls' in path):
+            print('check',path)
             #self.path = open.getExistingDirectory()
-            self.path = getpath
-            self.pathLineEdit.setText(self.path)
+            # self.path = getpath
+            # self.pathLineEdit.setText(self.path)
+
+            return True
         else:
             print ('所选文件不符合') 
             QMessageBox.information(self,                         #使用infomation信息框    
             "所选文件不符合",    
             "请选择.xls或.xlsx文件") 
+            return False
+
+    def changePath(self):
+        # print ('enter')
+        open = QFileDialog()
+        getpath=open.getOpenFileName()[0]
+            
+        if self.pathRight(getpath):
+            self.path = getpath
+            self.pathLineEdit.setText(self.path)
+        else:
+            pass
+        # if (getpath == ''):
+        #     print ('空路径') 
+        #     pass
+        # elif ('.xls' in getpath):
+        #     print('check',getpath)
+        #     #self.path = open.getExistingDirectory()
+        #     self.path = getpath
+        #     self.pathLineEdit.setText(self.path)
+        # else:
+        #     print ('所选文件不符合') 
+        #     QMessageBox.information(self,                         #使用infomation信息框    
+        #     "所选文件不符合",    
+        #     "请选择.xls或.xlsx文件") 
 
 
     def test(self):
