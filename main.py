@@ -3,7 +3,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import sys,os,json
 from punchcard import checkExcel ,creatExcel
-import sip
+import sip,time
 
 
 class MyLineEdit(QLineEdit):
@@ -42,16 +42,16 @@ class PersonalInfo():
                 model=json.load(json_file)
             return model
         else:
-            # return []
+            return []
             pass
             # return '不存在文件'
     
     def save(key,value):
         info = PersonalInfo.open()
         info[key] = value
-        # print ('save info',info)
-        with open("./source/info.json",'w',encoding='utf-8') as json_file:
-            json.dump(info,json_file,ensure_ascii=False)
+        print ('save info',info)
+        # with open("./source/info.json",'w',encoding='utf-8') as json_file:
+            # json.dump(info,json_file,ensure_ascii=False)
 
     def create():
         pass
@@ -95,6 +95,8 @@ class SelectDialog(QDialog):
         self.btn_output = None#导出按钮
         self.outputpath = None#导出路径
         self.buttonBox = None#确定保存
+        # self.selectnum = None#选择的工作原因序号
+        # self.selectnum_tit = None#选择的工作原因序号标题
 
     def getInfo(test,key):
         if test.info:
@@ -137,6 +139,7 @@ class SelectDialog(QDialog):
 
     def check(self):#检查
         result = checkExcel(self.path,self.tfnum.text())
+        self.result = result[1]
         print ('路径:',self.path,'工号：',self.tfnum.text(),'条数：',len(result[1]))
 
         #未打卡记录表
@@ -152,7 +155,7 @@ class SelectDialog(QDialog):
         self.record_detail.setSelectionMode(QAbstractItemView.MultiSelection)
         # self.record_detail.setCurrentRow(0) 
         # self.record_detail.setCurrentRow(1) 
-        print ('selectedItems,',self.record_detail.selectedItems().count())
+        # print ('selectedItems,',self.record_detail.selectedItems().count())
 
         # 未打卡数
         if self.record_num is None :
@@ -182,6 +185,12 @@ class SelectDialog(QDialog):
                 self.grd.addWidget(self.personal_reason_tit, 7, 0)
                 self.grd.addWidget(self.personal_reason, 7, 1)
                 self.personal_reason.setText(self.getInfo('personal_reason'))
+
+            # if self.selectnum is None:
+            #     self.selectnum = QLineEdit()
+            #     self.grd.addWidget(self.selectnum, 6, 2)
+            #     self.selectnum.setText("请填写工作原因序号")
+                
         else:
             if self.personal_reason :
                 # print ('chekck')
@@ -193,6 +202,13 @@ class SelectDialog(QDialog):
 
                 self.personal_reason = None
                 self.personal_reason_tit = None
+
+            # if self.selectnum :
+            #     self.grd.removeWidget(self.selectnum)
+            #     sip.delete(self.selectnum)
+            #     self.selectnum = None
+
+
 
         if self.btn_output is None:
             self.btn_output = QPushButton("设置")
@@ -236,19 +252,63 @@ class SelectDialog(QDialog):
         elif self.personal_reason :
             if (self.personal_reason.text() == ''):
                 QMessageBox.information(self,"","请填写个人原因")
-            else :
-                print ('ok')
-            PersonalInfo.save('filepath',self.path)
-            PersonalInfo.save('num',self.tfnum.text())
-            PersonalInfo.save('work_reason',self.work_reason.text())
-            PersonalInfo.save('output',self.outputpath.text())
-            PersonalInfo.save('personal_reason',self.personal_reason.text())
+            else :  
+                # print ('ok',self.result)
+                PersonalInfo.save('filepath',self.pathLineEdit.text())
+                PersonalInfo.save('num',self.tfnum.text())
+                PersonalInfo.save('work_reason',self.work_reason.text())
+                PersonalInfo.save('output',self.outputpath.text())
+                PersonalInfo.save('personal_reason',self.personal_reason.text())
+
+                combox=self.record_detail.selectedItems() 
+                lnum = []
+                for row in range(self.record_detail.count()):
+                    for x in self.record_detail.selectedItems() :
+                        if self.record_detail.item(row).text() == x.text():
+                            # print ('内容：',x.text(),row)
+                            lnum.append(row)
+                    # print ('内容：',self.record_detail.item(row).text())
+                print ('内容有：',lnum)
+                self.outputExcel(lnum)
         else:
-            print ('ok')
+            # print ('ok',self.result)
             PersonalInfo.save('filepath',self.path)
             PersonalInfo.save('num',self.tfnum.text())
             PersonalInfo.save('work_reason',self.work_reason.text())
             PersonalInfo.save('output',self.outputpath.text())
+            self.outputExcel()
+            # self.record_detail.currentText()
+    
+    def outputExcel(self,list=[0,1]):
+        if len(self.result) <= 2 :
+            for dic in self.result:
+                dic['type'] = '工作原因'
+                dic['detail'] = self.work_reason.text()
+
+            # print ('ok',self.result)
+        elif not len(list)==2:
+            QMessageBox.information(self,"","请选择两个工作原因")
+            return
+        else:
+            # print ('list有',list)
+            for i in range(len(self.result)):    
+                for x in list:
+                    # print ('x,',x,'i,',i)
+                    if i == x :
+                        self.result[i]['type'] = '工作原因'
+                        self.result[i]['detail'] = self.work_reason.text()
+                        break
+                    else:
+                        self.result[i]['type'] = '个人原因'
+                        self.result[i]['detail'] = self.personal_reason.text()
+                        
+        
+        nowtime = time.strftime('%Y-%m-%d',time.localtime(time.time()))
+        print ('ok',self.result,nowtime)
+        pathname = self.outputpath.text() + '/%s--%s.xls'%(self.result[0]['name'],nowtime)
+        strinfo = creatExcel(pathname,self.result)
+        QMessageBox.information(self,"",strinfo) 
+            
 
     def changePath(self):
         # print ('enter')

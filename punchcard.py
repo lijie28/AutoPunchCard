@@ -13,10 +13,12 @@ def creatExcel(final_name,unpunch):
 
     #excel 写数据0
     for x in unpunch:
-        setPunchDatas(new_table,new_row,x['id'],x['name'],x['date'],x['time'])
+        setPunchDatas(new_table,new_row,x['id'],x['name'],x['date'],x['time'],x['type'],x['detail'])
         new_row = new_row+1
 
     new_excel.save(final_name) # xlwt对象的保存方法，这时便覆盖掉了原来的excel
+    print ('save success')
+    return '保存成功'
 
 def checkExcel(data_excel_name,my_id):
     #获取数据的excel
@@ -74,7 +76,7 @@ def checkExcel(data_excel_name,my_id):
     return (showmsglist,unpunch)
 
 
-def setPunchDatas(table,row,id,name,date,noon):
+def setPunchDatas(table,row,id,name,date,noon,reasontype='暂无',reasondetail='暂无'):
     my_data = ['占位id','占位名字','占位日期','否','否','占位上下午','个人原因','忘记打卡','无','占位上下午','物联天下']
     # 获取一个工作表
     for index in range(len(my_data)):
@@ -83,6 +85,8 @@ def setPunchDatas(table,row,id,name,date,noon):
     table.write(row, 1, name)
     table.write(row, 2, date)
     table.write(row, 5, noon)
+    table.write(row, 6, reasontype)
+    table.write(row, 7, reasondetail)
     table.write(row, 9, noon)
     
 if __name__ == "__main__":
