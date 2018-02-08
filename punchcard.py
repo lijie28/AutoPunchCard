@@ -44,9 +44,14 @@ def checkExcel(data_excel_name,my_id):
                     string = re.sub("[<>]", "", strI)  # 去尖括号
                     english_only = ''.join(x for x in string if ord(x) < 256)  # 去中文
                     
-                    # 转换成时间数组
-                    timeArray = time.strptime(english_only, "%m-%d %H:%M")
-                    tm_hour = timeArray[3]  # 具体哪个小时
+                    if "2018" in english_only:
+                        print ('是有',strI)
+                        timeArray = time.strptime(english_only, "%Y-%m-%d")
+                        tm_hour = timeArray[3]  # 具体哪个小时
+                    else:
+                        # 转换成时间数组
+                        timeArray = time.strptime(english_only, "%m-%d %H:%M")
+                        tm_hour = timeArray[3]  # 具体哪个小时
                     str_time = ''
                     if 7 < tm_hour < 10:
                         str_time = '上午上班'
@@ -57,7 +62,7 @@ def checkExcel(data_excel_name,my_id):
                     elif 15 < tm_hour < 19:
                         str_time = '下午下班'
                     else:
-                        str_time = '未知时间'
+                        str_time = '全天'
 
                     dt_new = time.strftime("2018/%m/%d", timeArray)
                     showmsg =  ('(%d)' %i) + name + string +',具体时间：' + english_only +',=====>>'+ dt_new + ' ' + str_time

@@ -138,7 +138,7 @@ class SelectDialog(QDialog):
 
 
     def check(self):#检查
-        result = checkExcel(self.path,self.tfnum.text())
+        result = checkExcel(self.pathLineEdit.text(),self.tfnum.text())
         self.result = result[1]
         print ('路径:',self.path,'工号：',self.tfnum.text(),'条数：',len(result[1]))
 
