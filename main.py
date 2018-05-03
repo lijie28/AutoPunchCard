@@ -164,49 +164,42 @@ class SelectDialog(QDialog):
             self.grd.addWidget(self.record_num, 4, 1)
         # else:
         if len(result[1]) >2:
-            self.record_num.setText("有%d条未打卡记录,工作原因只能选2条" % len(result[1]))
+            self.record_num.setText("有%d条未打卡记录,个人原因只能选2条" % len(result[1]))
         else:
             self.record_num.setText("有%d条未打卡记录" % len(result[1]))
 
 
-        #工作原因
-        if self.work_reason is None:
-            self.work_reason = QLineEdit()
-            self.grd.addWidget(QLabel("工作原因："), 6, 0)
-            self.grd.addWidget(self.work_reason, 6, 1)
-        self.work_reason.setText(self.getInfo('work_reason'))
+        # print ('记录大于2')
+        if self.personal_reason is None:
+            self.personal_reason = QLineEdit()
+            self.personal_reason_tit = QLabel("个人原因：")
+            self.grd.addWidget(self.personal_reason_tit, 6, 0)
+            self.grd.addWidget(self.personal_reason, 6, 1)
+            self.personal_reason.setText(self.getInfo('personal_reason'))
 
 
         if len(result[1])>2:
-            # print ('记录大于2')
-            if self.personal_reason is None:
-                self.personal_reason = QLineEdit()
-                self.personal_reason_tit = QLabel("个人原因：")
-                self.grd.addWidget(self.personal_reason_tit, 7, 0)
-                self.grd.addWidget(self.personal_reason, 7, 1)
-                self.personal_reason.setText(self.getInfo('personal_reason'))
 
-            # if self.selectnum is None:
-            #     self.selectnum = QLineEdit()
-            #     self.grd.addWidget(self.selectnum, 6, 2)
-            #     self.selectnum.setText("请填写工作原因序号")
-                
+            #工作原因
+            if self.work_reason is None:
+                self.work_reason = QLineEdit()
+                self.work_reason_tit = QLabel("工作原因：")
+                self.grd.addWidget(self.work_reason_tit, 7, 0)
+                self.grd.addWidget(self.work_reason, 7, 1)
+            self.work_reason.setText(self.getInfo('work_reason'))
+
+
         else:
-            if self.personal_reason :
+            if self.work_reason :
                 # print ('chekck')
-                self.grd.removeWidget(self.personal_reason)
-                self.grd.removeWidget(self.personal_reason_tit)
+                self.grd.removeWidget(self.work_reason)
+                self.grd.removeWidget(self.work_reason_tit)
 
-                sip.delete(self.personal_reason)
-                sip.delete(self.personal_reason_tit)
+                sip.delete(self.work_reason)
+                sip.delete(self.work_reason_tit)
 
-                self.personal_reason = None
-                self.personal_reason_tit = None
-
-            # if self.selectnum :
-            #     self.grd.removeWidget(self.selectnum)
-            #     sip.delete(self.selectnum)
-            #     self.selectnum = None
+                self.work_reason = None
+                self.work_reason_tit = None
 
 
 
@@ -231,15 +224,7 @@ class SelectDialog(QDialog):
         open = QFileDialog()
         outputpath_str = open.getExistingDirectory()
         self.outputpath.setText(outputpath_str)
-        # print ('set output',self.outputpath.text())    
 
-        # if self.buttonBox is None:
-        #     self.buttonBox = QDialogButtonBox()
-        #     self.buttonBox.setOrientation(Qt.Horizontal)  # 设置为水平方向
-        #     self.buttonBox.setStandardButtons(QDialogButtonBox.lala|QDialogButtonBox.Cancel)
-        #     self.grd.addWidget(self.buttonBox, 9, 1)
-        # self.buttonBox.accepted.connect(self.test)  # 确定
-        # self.buttonBox.rejected.connect(self.test)  # 取消
       
     def confirm(self):
         # print ('confirm')
@@ -249,9 +234,9 @@ class SelectDialog(QDialog):
             QMessageBox.information(self,"","请设置导出路径")
         elif self.tfnum.text() == '':
             QMessageBox.information(self,"","请填写工号")
-        elif self.personal_reason :
-            if (self.personal_reason.text() == ''):
-                QMessageBox.information(self,"","请填写个人原因")
+        elif self.work_reason :
+            if (self.work_reason.text() == ''):
+                QMessageBox.information(self,"","请填写工作原因")
             else :  
                 # print ('ok',self.result)
                 PersonalInfo.save('filepath',self.pathLineEdit.text())
@@ -282,12 +267,12 @@ class SelectDialog(QDialog):
     def outputExcel(self,list=[0,1]):
         if len(self.result) <= 2 :
             for dic in self.result:
-                dic['type'] = '工作原因'
+                dic['type'] = '个人原因'
                 dic['detail'] = self.work_reason.text()
 
             # print ('ok',self.result)
         elif not len(list)==2:
-            QMessageBox.information(self,"","请选择两个工作原因")
+            QMessageBox.information(self,"","请选择两个个人原因")
             return
         else:
             # print ('list有',list)
@@ -295,12 +280,12 @@ class SelectDialog(QDialog):
                 for x in list:
                     # print ('x,',x,'i,',i)
                     if i == x :
-                        self.result[i]['type'] = '工作原因'
-                        self.result[i]['detail'] = self.work_reason.text()
-                        break
-                    else:
                         self.result[i]['type'] = '个人原因'
                         self.result[i]['detail'] = self.personal_reason.text()
+                        break
+                    else:
+                        self.result[i]['type'] = '工作原因'
+                        self.result[i]['detail'] = self.work_reason.text()
                         
         
         nowtime = time.strftime('%Y-%m-%d',time.localtime(time.time()))
