@@ -22,7 +22,11 @@ def creatExcel(final_name,unpunch):
 
 def checkExcel(data_excel_name,my_id):
     #获取数据的excel
-    data = xlrd.open_workbook(data_excel_name)
+    data = xlrd.open_workbook(data_excel_name, encoding_override="gbk")
+    
+    if data == None:
+        print ('错误excel编码')
+        return
     # 获取一个工作表
     table = data.sheets()[0]  # 通过索引顺序获取
     # print ('表', table.nrows, table.ncols)
@@ -95,6 +99,6 @@ def setPunchDatas(table,row,id,name,date,noon,reasontype='暂无',reasondetail='
     table.write(row, 9, noon)
     
 if __name__ == "__main__":
-    result = checkExcel('/Users/lijie/Documents/GitHub/AutoPunchCard/创意车街考勤.xlsx','19489')
+    result = checkExcel('/Users/lijie/Desktop/4442.xlsx','19489')
     print (result[1])
     creatExcel('tehah.xls',result[1])
