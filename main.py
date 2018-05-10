@@ -228,8 +228,8 @@ class SelectDialog(QDialog):
       
     def confirm(self):
         # print ('confirm')
-        if self.work_reason.text() == '':
-            QMessageBox.information(self,"","请填写工作原因") 
+        if self.personal_reason.text() == '':
+            QMessageBox.information(self,"","请填写个人原因") 
         elif self.outputpath.text() == '':
             QMessageBox.information(self,"","请设置导出路径")
         elif self.tfnum.text() == '':
@@ -259,7 +259,7 @@ class SelectDialog(QDialog):
             # print ('ok',self.result)
             PersonalInfo.save('filepath',self.path)
             PersonalInfo.save('num',self.tfnum.text())
-            PersonalInfo.save('work_reason',self.work_reason.text())
+            PersonalInfo.save('personal_reason',self.personal_reason.text())
             PersonalInfo.save('output',self.outputpath.text())
             self.outputExcel()
             # self.record_detail.currentText()
@@ -268,7 +268,7 @@ class SelectDialog(QDialog):
         if len(self.result) <= 2 :
             for dic in self.result:
                 dic['type'] = '个人原因'
-                dic['detail'] = self.work_reason.text()
+                dic['detail'] = self.personal_reason.text()
 
             # print ('ok',self.result)
         elif not len(list)==2:
